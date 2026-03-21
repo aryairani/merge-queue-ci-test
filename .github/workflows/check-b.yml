@@ -1,0 +1,18 @@
+name: Check B
+
+# Check B runs when a PR enters the merge queue.
+# It must pass before the PR is merged into the main branch.
+on:
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  check-b:
+    name: Check B
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Check B
+        run: echo "Check B passed!"
