@@ -1,9 +1,9 @@
 name: Check A
 
-# Check A runs on every push to a pull request.
+# Check A runs on every push, testing the exact pushed commit SHA.
 # It must pass before a PR can be added to the merge queue.
 on:
-  pull_request:
+  push:
 
 permissions:
   contents: read

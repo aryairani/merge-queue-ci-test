@@ -5,8 +5,8 @@ A sample repository demonstrating GitHub Actions with merge queues.
 ## Workflows
 
 ### Check A (`check-a.yml`)
-- **Trigger:** `pull_request`
-- Runs on every push to a pull request.
+- **Trigger:** `push`
+- Runs on every push, testing the exact pushed commit SHA (not a synthetic merge commit).
 - Must pass before a PR can be added to the merge queue.
 - Configure this as a required status check in the branch protection rule for `main`.
 
