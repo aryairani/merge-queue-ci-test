@@ -18,49 +18,90 @@ A sample repository demonstrating GitHub Actions with merge queues.
 
 ## Configuring the Repository
 
-You can apply the required rules either through the GitHub UI or by importing the pre-built ruleset files in [`rulesets/`](rulesets/).
+### Prerequisites — plan and visibility requirements
 
-### Option A — Import rulesets (fastest)
+The **Require merge queue** option is only visible in the GitHub UI when both conditions are met:
+
+| Repository visibility | Plan required |
+|---|---|
+| **Public** | Any plan (Free, Pro, Team, Enterprise) |
+| **Private** | GitHub **Team** or **Enterprise** |
+
+If you don't see **Require merge queue** in the UI, your repository is likely private and on the free plan. Either make the repository public, upgrade the plan, or use the [GitHub CLI approach](#option-c--github-cli--rest-api) below.
+
+> **Tip:** Status check names (`Check A`, `Check B`) are registered the first time a workflow run completes. If they don't appear in the search box yet, push a commit (to register Check A) and open a PR and add it to the queue (to register Check B), then come back and add the checks.
+
+---
+
+### Option A — Classic branch protection rules (most widely available)
+
+This path works for **public repositories on any plan** and also for private repos on Team/Enterprise.
+
+1. Go to **Settings → Branches → Branch protection rules → Add rule** (or **Add classic branch protection rule**).
+2. Set **Branch name pattern** to `main`.
+3. Check **Require status checks to pass before merging**.
+   - Search for `Check A` and add it as a required check.
+4. Check **Require merge queue**.
+   - This reveals merge queue options; leave defaults unless you have a preference.
+5. In the merge queue's **Required checks for the merge queue** field, add `Check B`.
+6. Click **Create** (or **Save changes**).
+
+---
+
+### Option B — Rulesets UI (GitHub Team / Enterprise, or public repos)
+
+You can also apply the rules by importing the pre-built ruleset files in [`rulesets/`](rulesets/).
 
 1. Go to **Settings → Rules → Rulesets**.
 2. Click **New ruleset → Import a ruleset**.
 3. Import [`rulesets/require-check-a.json`](rulesets/require-check-a.json).
    - This creates a branch ruleset on `main` that requires **Check A** to pass and enables the merge queue.
 4. Import [`rulesets/require-check-b.json`](rulesets/require-check-b.json).
-   - This creates a merge-queue ruleset on `main` that requires **Check B** before merging.
-5. Verify both rulesets are **Active** in the Rulesets list.
+   - This requires **Check B** inside the merge queue before merging.
+5. Verify both rulesets are **Active** in the list.
 
-> **Note:** After import, open each ruleset and confirm the branch targeting pattern (`main`) and enforcement status look correct before saving.
+To configure manually instead of importing:
+
+**Ruleset 1 — Require Check A + enable merge queue**
+1. **Settings → Rules → Rulesets → New ruleset → New branch ruleset**.
+2. Name: `Require Check A`, Enforcement: **Active**, Target branch: `main`.
+3. Enable **Require status checks to pass** → add `Check A`.
+4. Enable **Require merge queue** (defaults are fine).
+5. Click **Create**.
+
+**Ruleset 2 — Require Check B in merge queue**
+1. Same path, name it `Require Check B (merge queue)`, target `main`.
+2. Enable **Require status checks to pass** → add `Check B`.
+3. Click **Create**.
 
 ---
 
-### Option B — Configure manually through the UI
+### Option C — GitHub CLI / REST API
 
-#### Step 1 — Require Check A before entering the merge queue
+If you prefer the command line or need to script the setup, you can configure branch protection (including merge queue) using the GitHub REST API via `gh api`. The full set of parameters for the branch protection endpoint is documented at [GitHub Docs — Update branch protection](https://docs.github.com/en/rest/branches/branch-protection?apiVersion=2022-11-28#update-branch-protection). Merge queue settings live under the `required_merge_queue` field.
 
-1. Go to **Settings → Rules → Rulesets → New ruleset → New branch ruleset**.
-2. Set **Ruleset name** to `Require Check A`.
-3. Set **Enforcement status** to **Active**.
-4. Under **Target branches**, click **Add target → Include by pattern** and enter `main`.
-5. Scroll to **Rules** and enable **Require status checks to pass**.
-   - Click **Add checks**, search for `Check A`, and select it.
-   - Leave *Require branches to be up to date* unchecked (the `push` trigger already tests the exact HEAD).
-6. Still under **Rules**, enable **Require merge queue**.
-   - Leave merge-method and grouping settings at their defaults unless you have a preference.
-7. Click **Create**.
+```bash
+# Minimal example — requires a token with 'repo' scope
+REPO="aryairani/merge-queue-ci-test"
 
-#### Step 2 — Require Check B before merging out of the queue
+gh api --method PUT "repos/$REPO/branches/main/protection" \
+  --input - <<'EOF'
+{
+  "required_status_checks": {
+    "strict": false,
+    "contexts": ["Check A"]
+  },
+  "enforce_admins": false,
+  "required_pull_request_reviews": null,
+  "restrictions": null,
+  "required_merge_queue": true
+}
+EOF
+```
 
-1. Go to **Settings → Rules → Rulesets → New ruleset → New branch ruleset**.
-2. Set **Ruleset name** to `Require Check B (merge queue)`.
-3. Set **Enforcement status** to **Active**.
-4. Under **Target branches**, add `main` (same as above).
-5. Under **Rules**, enable **Require status checks to pass**.
-   - Click **Add checks**, search for `Check B`, and select it.
-6. Click **Create**.
+After enabling the merge queue this way, go to **Settings → Branches → Branch protection rules → main** and add `Check B` under **Required checks for the merge queue**.
 
-> **Tip:** Status check names are registered the first time a workflow run completes.
-> If `Check A` or `Check B` don't appear in the search box yet, push a commit (to register Check A) and add a PR to the merge queue (to register Check B), then come back and add them.
+> **Note:** The merge queue REST API also respects the same plan/visibility requirements. For private repos on the free plan, upgrading to Team is the only path.
 
 ---
 
