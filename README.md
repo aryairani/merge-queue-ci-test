@@ -27,7 +27,7 @@ The **Require merge queue** option is only visible in the GitHub UI when both co
 | **Public** | Any plan (Free, Pro, Team, Enterprise) |
 | **Private** | GitHub **Team** or **Enterprise** |
 
-If you don't see **Require merge queue** in the UI, your repository is likely private and on the free plan. Either make the repository public, upgrade the plan, or use the [GitHub CLI approach](#option-c--github-cli--rest-api) below.
+If you don't see **Require merge queue** in the Rulesets UI, check two things: (1) it only appears for public repos or private repos on a paid plan; (2) the setting also exists in the classic **Branch protection rules** UI (see [Option A](#option-a--classic-branch-protection-rules-most-widely-available) below), which some users find easier to locate.
 
 > **Tip:** Status check names (`Check A`, `Check B`) are registered the first time a workflow run completes. If they don't appear in the search box yet, push a commit (to register Check A) and open a PR and add it to the queue (to register Check B), then come back and add the checks.
 
