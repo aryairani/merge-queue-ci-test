@@ -1,0 +1,18 @@
+name: Check A
+
+# Check A runs on every push, testing the exact pushed commit SHA.
+# It must pass before a PR can be added to the merge queue.
+on:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  check-a:
+    name: Check A
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Check A
+        run: echo "Check A passed!"
